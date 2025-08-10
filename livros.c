@@ -1,188 +1,189 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include "livros.h"
 #include "arquivo.h"
-#include "estruturas.h"
-
+#include "arvore.h"
+#include "utils.h"
 
 /**
- * Propósito: Cadastra um novo livro no arquivo
- * Pré-condição: arquivo aberto e dados do livro válidos
- * Pós-condição: livro inserido no arquivo, cabeçalho atualizado
+ * Propósito: Cadastra um novo livro no sistema
+ * Pré-condições: nenhuma
+ * Pós-condições: livro será inserido se código não existir
  */
-int cadastrarLivro(FILE* file, Livro* livro) {
-    Cabecalho cabecalho;
-    if (!lerCabecalho(file, &cabecalho)) {
-        printf("Erro ao ler cabeçalho\n");
-        return 0;
-    }
+void cadastrar_livro() {
+    Livro novo_livro;
 
-    // Verifica duplicata de código
-    long pos = cabecalho.pos_cabeca_livros;
-    long auxPos = pos;
-	int flag = 0;
-    Livro aux;
+    printf("\n=== CADASTRAR LIVRO ===\n");
 
-    while (pos != -1) {
-        auxPos = pos;
-        fseek(file, pos, SEEK_SET);
-        if (fread(&aux, sizeof(Livro), 1, file) != 1) {
-            perror("Erro de leitura(cadastrarLivro)");
-            return 0;
-        }
-        if (aux.codigo == livro->codigo) {
-            printf("Erro: Livro com código %d já existe.\n", livro->codigo);
-            return 0;
-        }
-        else if (livro->codigo < aux.codigo) {
-            pos = aux.esq;
-        }
-        else {
-            pos = aux.dir;
-        }
-    }
-    livro->esq = -1;
-    livro->dir = -1;
+    // Leitura do código com validação
+    novo_livro.codigo = read_int("Código: ");
 
-    // Insere no arquivo
-    if (cabecalho.pos_cabeca_livros == -1) {
-        // Primeira inserção
-        cabecalho.pos_cabeca_livros = cabecalho.pos_topo_livros;
-    }
-    else {
-		flag = 1;
-        fseek(file, auxPos, SEEK_SET);
-        if (fread(&aux, sizeof(Livro), 1, file) != 1) {
-            perror("Erro de leitura(cadastrarLivro2)\n");
-            return;
-        }
-        if (livro->codigo < aux.codigo) {
-            aux.esq = cabecalho.pos_topo_livros;
-        }
-        else {
-            aux.dir = cabecalho.pos_topo_livros;
-        }
-
-    }
-
-    // Atualiza filhos do livro existente
-    if (flag == 1) {
-        if (fwrite(&aux, sizeof(Livro), 1, file) != 1) {
-            perror("Erro ao escrever livro\n");
-            return 0;
-        }
-    }
-
-	//Escreve o novo livro na posição do topo
-    fseek(file, cabecalho.pos_topo_livros, SEEK_SET);
-    if (fwrite(livro, sizeof(Livro), 1, file) != 1) {
-        perror("Erro ao escrever livro\n");
-        return 0;
-    }
-
-
-    cabecalho.pos_topo_livros += sizeof(Livro);
-    cabecalho.total_livros++;
-    if (!escreverCabecalho(file, &cabecalho)) {
-        printf("Erro ao atualizar cabeçalho\n");
-        return 0;
-    }
-
-    printf("Livro cadastrado com sucesso!\n");
-    return 1;
-}
-
-
-/**
- * Propósito: Calcula e exibe o total de livros cadastrados
- * Pré-condição: arquivo aberto
- * Pós-condição: total de livros e exemplares impressos na tela
- *
-void calcularTotalLivros(FILE* file) {
-
-
-    int total_exemplares = 0;
-    Livro livro;
-    long pos = cabecalho.pos_cabeca_livros;
-    while (pos != -1) {
-        fseek(file, pos, SEEK_SET);
-        if (fread(&livro, sizeof(Livro), 1, file) != 1) {
-            perror("Erro de leitura");
-            break;
-        }
-        total_exemplares += livro.exemplares;
-        pos = livro.proxima_pos;
-    }
-    printf("Total de livros cadastrados: %d\n", cabecalho.total_livros);
-    printf("Total de exemplares na biblioteca: %d\n", total_exemplares);
-}
-
-/**
- * Propósito: Imprime dados de um livro
- * Pré-condição: livro válido
- * Pós-condição: dados do livro impressos na tela
- */
-void imprimirLivros(FILE* file, Livro* livro, long pos) {
-    if (pos == -1) return;
-    fseek(file, pos, SEEK_SET);
-    if(fread(&livro, sizeof(Livro), 1, file) != 1) {
+    // Verificar se código já existe
+    if (buscar_livro(novo_livro.codigo) != -1) {
+        printf("Erro: Já existe um livro com código %d\n", novo_livro.codigo);
         return;
     }
-    printf("Código: %d\n", livro->codigo);
-    printf("Título: %s\n", livro->titulo);
-    printf("Autor: %s\n", livro->autor);
-    printf("Editora: %s\n", livro->editora);
-    printf("Edição: %d\n", livro->edicao);
-    printf("Ano: %d\n", livro->ano);
-    printf("Exemplares: %d\n", livro->exemplares);
-    printf("Preco: %d\n", livro->preco);
-    printf("----------------------\n\n");
-	imprimirLivros(file, &livro, livro->esq);
-	imprimirLivros(file, &livro, livro->dir);
+
+    getchar(); // consumir \n restante do read_int
+
+    printf("Título: ");
+    fgets(novo_livro.titulo, sizeof(novo_livro.titulo), stdin);
+    trim_string(novo_livro.titulo);
+
+    printf("Autor: ");
+    fgets(novo_livro.autor, sizeof(novo_livro.autor), stdin);
+    trim_string(novo_livro.autor);
+
+    printf("Editora: ");
+    fgets(novo_livro.editora, sizeof(novo_livro.editora), stdin);
+    trim_string(novo_livro.editora);
+
+    novo_livro.edicao = read_int("Edição: ");
+    novo_livro.ano = read_int("Ano: ");
+    novo_livro.exemplares = read_int("Exemplares: ");
+
+    // Limpar buffer antes de ler o preço
+    getchar(); // consumir \n restante do read_int
+
+    // Usar a nova função para ler o preço
+    novo_livro.preco = read_float("Preço: ");
+
+    // Inicializar campos de controle
+    novo_livro.esquerda = -1;
+    novo_livro.direita = -1;
+    novo_livro.livre = 0;
+    novo_livro.proximo_livre = -1;
+
+    // Obter posição e inserir
+    int nova_pos = obter_nova_posicao();
+    escrever_livro_posicao(nova_pos, &novo_livro);
+
+    // Inserir na árvore
+    inserir_na_arvore(novo_livro.codigo, nova_pos);
+
+    // Incrementar contador
+    CabecalhoArquivo cab;
+    ler_cabecalho(&cab);
+    cab.total_livros++;
+    atualizar_cabecalho(&cab);
+
+    printf("Livro cadastrado com sucesso!\n");
+}
+
+/**
+ * Propósito: Imprime os dados de um livro específico
+ * Pré-condições: nenhuma
+ * Pós-condições: dados do livro serão exibidos ou mensagem de erro
+ */
+void imprimir_dados_livro() {
+    int codigo;
+    printf("\n=== IMPRIMIR DADOS DO LIVRO ===\n");
+    codigo = read_int("Código do livro: ");
+
+    int pos = buscar_livro(codigo);
+    if (pos == -1) {
+        printf("Livro com código %d não encontrado.\n", codigo);
+        return;
+    }
+
+    Livro livro;
+    ler_livro_posicao(pos, &livro);
+
+    char preco_str[20];
+    formatar_preco(livro.preco, preco_str);
+
+    printf("\n--- DADOS DO LIVRO ---\n");
+    printf("Código: %d\n", livro.codigo);
+    printf("Título: %s\n", livro.titulo);
+    printf("Autor: %s\n", livro.autor);
+    printf("Editora: %s\n", livro.editora);
+    printf("Edição: %d\n", livro.edicao);
+    printf("Ano: %d\n", livro.ano);
+    printf("Exemplares: %d\n", livro.exemplares);
+    printf("Preço: R$ %s\n", preco_str);
 }
 
 /**
  * Propósito: Lista todos os livros cadastrados
- * Pré-condição: arquivo aberto
- * Pós-condição: todos os livros impressos na tela
+ * Pré-condições: nenhuma
+ * Pós-condições: todos os livros serão listados em ordem crescente
  */
-void listarTodosLivros(FILE* file) {
-    Cabecalho cabecalho;
-    if (!lerCabecalho(file, &cabecalho)) {
-        printf("Erro ao ler cabeçalho\n");
-        return;
-    }
-    if (cabecalho.total_livros == 0) {
+void listar_todos_livros() {
+    printf("\n=== LISTA DE TODOS OS LIVROS ===\n");
+
+    CabecalhoArquivo cab;
+    ler_cabecalho(&cab);
+
+    if (cab.raiz == -1) {
         printf("Nenhum livro cadastrado.\n");
         return;
     }
-    printf("\n=== LISTA DE TODOS OS LIVROS ===\n");
 
-    Livro livro;
-    long pos = cabecalho.pos_cabeca_livros;
-	imprimirLivros(file, &livro, pos);
-    printf("===============================\n\n");
+    percorrer_in_ordem(cab.raiz);
 }
 
 /**
- * Propósito: Lê um livro do arquivo binario e retorna a estrutura Livro
- * Pré-condições: file deve estar aberto, linha deve estar no formato correto
- * Pós-condições: livro lido e retornado, retorna 0 se falha
+ * Propósito: Calcula e exibe o total de livros cadastrados
+ * Pré-condições: nenhuma
+ * Pós-condições: total de livros será exibido
  */
-Livro lerLivroBinario(FILE* file) {
-    Livro livro;
-    char* token;
+void calcular_total() {
+    CabecalhoArquivo cab;
+    ler_cabecalho(&cab);
 
-    // Campos obrigatórios
-    token = strtok(NULL, ";"); if (!token) return; removerEspacos(token); livro.codigo = atoi(token);
-    token = strtok(NULL, ";"); if (!token) return; removerEspacos(token); strncpy(livro.titulo, token, sizeof(livro.titulo) - 1); livro.titulo[sizeof(livro.titulo) - 1] = '\0';
-    token = strtok(NULL, ";"); if (!token) return; removerEspacos(token); strncpy(livro.autor, token, sizeof(livro.autor) - 1); livro.autor[sizeof(livro.autor) - 1] = '\0';
-    token = strtok(NULL, ";"); if (!token) return; removerEspacos(token); strncpy(livro.editora, token, sizeof(livro.editora) - 1); livro.editora[sizeof(livro.editora) - 1] = '\0';
-    token = strtok(NULL, ";"); if (!token) return; removerEspacos(token); livro.edicao = atoi(token);
-    token = strtok(NULL, ";"); if (!token) return; removerEspacos(token); livro.ano = atoi(token);
-    token = strtok(NULL, ";"); if (!token) return; removerEspacos(token); livro.exemplares = atoi(token);
-    token = strtok(NULL, ";"); if (!token) return; removerEspacos(token); livro.preco = atoi(token);
-    return livro;
+    printf("\n=== TOTAL DE LIVROS ===\n");
+    printf("Total de livros cadastrados: %d\n", cab.total_livros);
+}
+
+/**
+ * Propósito: Remove um livro do sistema
+ * Pré-condições: nenhuma
+ * Pós-condições: livro será removido se código existir
+ */
+void remover_livro() {
+    int codigo;
+    printf("\n=== REMOVER LIVRO ===\n");
+    codigo = read_int("Código do livro a remover: ");
+
+    if (buscar_livro(codigo) == -1) {
+        printf("Livro com código %d não encontrado.\n", codigo);
+        return;
+    }
+
+    remover_da_arvore(codigo);
+    printf("Livro removido com sucesso!\n");
+}
+
+/**
+ * Propósito: Imprime a lista de registros livres
+ * Pré-condições: nenhuma
+ * Pós-condições: posições livres serão exibidas
+ */
+void imprimir_lista_livres() {
+    printf("\n=== LISTA DE REGISTROS LIVRES ===\n");
+
+    CabecalhoArquivo cab;
+    ler_cabecalho(&cab);
+
+    if (cab.cabeca_livres == -1) {
+        printf("Não há registros livres.\n");
+        return;
+    }
+
+    printf("Posições de registros livres: ");
+    int pos_atual = cab.cabeca_livres;
+    int flag=0;
+
+    while (pos_atual != -1) {
+        if(flag==1) printf(", ");
+		else flag = 1;
+        printf("%d", pos_atual);
+
+        Livro livro_livre;
+        if (!ler_livro_posicao(pos_atual, &livro_livre)) break;
+        pos_atual = livro_livre.proximo_livre;
+    }
+
+    printf("\n");
 }

@@ -1,29 +1,15 @@
 #ifndef ARQUIVO_H
 #define ARQUIVO_H
 
-#include <stdio.h>
 #include "estruturas.h"
 
-/**
- * Propósito: Abre arquivo binário para leitura/escrita, criando se não existir
- * Pré-condição: nome do arquivo válido
- * Pós-condição: retorna ponteiro para arquivo ou NULL se erro
- */
-FILE* abrirArquivoBinario(char arquivo[]);
-
-/**
- * Propósito: Lê o cabeçalho do arquivo
- * Pré-condição: arquivo aberto e válido
- * Pós-condição: retorna 1 se sucesso, 0 se erro
- */
-int lerCabecalho(FILE* file, Cabecalho* cabecalho);
-
-/**
- * Propósito: Escreve o cabeçalho no arquivo
- * Pré-condição: arquivo aberto e cabeçalho válido
- * Pós-condição: retorna 1 se sucesso, 0 se erro
- */
-int escreverCabecalho(FILE* file, Cabecalho* cabecalho);
-
+// Protótipos das funções de arquivo
+void inicializar_arquivo();
+int ler_cabecalho(CabecalhoArquivo *cab);
+void atualizar_cabecalho(CabecalhoArquivo *cab);
+int ler_livro_posicao(int pos, Livro *livro);
+int escrever_livro_posicao(int pos, Livro *livro);
+int obter_nova_posicao();
+void adicionar_registro_livre(int pos);
 
 #endif

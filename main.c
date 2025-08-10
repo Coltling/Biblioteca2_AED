@@ -1,99 +1,75 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "estruturas.h"
 #include "arquivo.h"
-#include "estruturas.h"
 #include "livros.h"
+#include "arvore.h"
+#include "carregamento.h"
 
 /**
- * Exibe o menu principal de opÃ§Ãµes.
+ * Propósito: Exibe o menu principal e processa as opções
+ * Pré-condições: nenhuma
+ * Pós-condições: sistema funcionará até usuário escolher sair
  */
- void mostrarMenu() {
-    printf("\n=== SISTEMA DE BIBLIOTECA ===\n\n");
-    
-    printf("Gerenciamento de Livros:\n\n");
-    
-    printf("1. Cadastrar livro\n");
-    printf("2. Imprimir dados do livro\n");
-    printf("3. Listar todos os livros\n");
-    printf("5. Calcular total de livros\n\n");
-
-    printf("ImportaÃ§Ã£o em Lote:\n\n");
-
-    printf("10. Carregar arquivo texto\n");
-    //printf("11. Mostrar informaÃ§Ãµes do arquivo (opÃ§Ã£o extra)\n");
-    printf("\n0. Sair\n\n");
-    printf("Escolha uma opÃ§Ã£o: ");
-}
-
-int main() {
-    FILE* arquivo = abrirArquivoBinario("biblioteca.dat");
-    if (!arquivo) {
-        printf("Erro ao abrir arquivo da biblioteca!\n");
-        return 1;   
-    }
-
+void menu_principal() {
     int opcao;
-    Livro livro;
-    int codigo, codigo_livro;
-    char nomeArquivo[100];
-    char titulo[151];
 
     do {
-        mostrarMenu();
-        if (scanf("%d", &opcao) != 1) {
-            // Entrada invÃ¡lida
-            scanf("%*s");
-            opcao = -1;
-        }
-        getchar(); // limpa o buffer
+        printf("\n=== SISTEMA DE GERENCIAMENTO DE LIVROS ===\n\n");
+        printf("1. Cadastrar livro\n");
+        printf("2. Imprimir dados do livro\n");
+        printf("3. Listar todos os livros\n");
+        printf("4. Calcular total de livros\n");
+        printf("5. Remover livro\n");
+        printf("6. Carregar arquivo\n");
+        printf("7. Imprimir lista de registros livres\n");
+        printf("8. Imprimir árvore por níveis\n");
+        printf("0. Sair\n");
+        printf("\nEscolha uma opção: ");
+
+        scanf("%d", &opcao);
 
         switch (opcao) {
-            case 1:
-                printf("\n--- CADASTRAR LIVRO ---\n");
-                printf("CÃ³digo: ");
-                scanf("%d", &livro.codigo);
-                getchar();
-
-                printf("TÃ­tulo: ");
-                fgets(livro.titulo, sizeof(livro.titulo), stdin);
-                livro.titulo[strcspn(livro.titulo, "\n")] = '\0';
-
-                printf("Autor: ");
-                fgets(livro.autor, sizeof(livro.autor), stdin);
-                livro.autor[strcspn(livro.autor, "\n")] = '\0';
-
-                printf("Editora: ");
-                fgets(livro.editora, sizeof(livro.editora), stdin);
-                livro.editora[strcspn(livro.editora, "\n")] = '\0';
-
-                printf("EdiÃ§Ã£o: ");
-                scanf("%d", &livro.edicao);
-
-                printf("Ano: ");
-                scanf("%d", &livro.ano);
-
-                printf("Exemplares: ");
-                scanf("%d", &livro.exemplares);
-
-                printf("Preco: ");
-                scanf("%d", &livro.preco);
-
-                cadastrarLivro(arquivo, &livro);
-                break;
-            case 3:
-                listarTodosLivros(arquivo);
-                break;
-            case 0:
-                printf("Saindo do sistema...\n");
-                break;
-
-            default:
-                printf("OpÃ§Ã£o invÃ¡lida!\n");
+        case 1:
+            cadastrar_livro();
+            break;
+        case 2:
+            imprimir_dados_livro();
+            break;
+        case 3:
+            listar_todos_livros();
+            break;
+        case 4:
+            calcular_total();
+            break;
+        case 5:
+            remover_livro();
+            break;
+        case 6:
+            carregar_arquivo();
+            break;
+        case 7:
+            imprimir_lista_livres();
+            break;
+        case 8:
+            imprimir_arvore_niveis();
+            break;
+        case 0:
+            break;
+        default:
+            printf("Opção inválida!\n");
         }
-    } while (opcao != 0);
 
-    fclose(arquivo);
+    } while (opcao != 0);
+}
+
+/**
+ * Propósito: Função principal do programa
+ * Pré-condições: nenhuma
+ * Pós-condições: sistema será inicializado e executado
+ */
+int main() {
+    inicializar_arquivo();
+    menu_principal();
     return 0;
 }
